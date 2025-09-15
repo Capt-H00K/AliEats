@@ -1,0 +1,43 @@
+Build a full working web application called "FlavorFleet" using React (with TypeScript), Firebase (Auth + Firestore), and Tailwind CSS. This app is a delivery platform for a single restaurant with multiple drivers and multiple customers. Include the following requirements:
+
+1. **Frontend:**
+   - Use React 18 with TypeScript.
+   - Use functional components and hooks.
+   - Tailwind CSS for styling.
+   - Pages:
+     - Customer Dashboard: browse menu, place orders.
+     - Driver Dashboard: view assigned orders, confirm cash/bank payment received.
+     - Restaurant Dashboard: view all orders, update order status.
+   - Components:
+     - MenuCard, OrderCard, DriverCard, Navbar, MobileNav.
+     - Reusable UI components (Button, Input, Modal, Toast, etc.).
+   - Authentication: signup/login for customers and drivers using Firebase Auth.
+
+2. **Backend (Firebase Firestore):**
+   - Collections:
+     - users (customers and drivers)
+     - orders (with fields: customerId, driverId, items, totalPrice, status, paymentMethod, paymentConfirmed)
+     - menu (items with name, description, price)
+   - Users can be either 'customer' or 'driver'.
+   - Drivers can mark payments as received.
+
+3. **Orders & Payments:**
+   - Customers can select items and choose payment method: "Cash on Delivery" or "Bank Transfer".
+   - Drivers can confirm receipt of payment in the app.
+   - Restaurant sees all orders but is not involved in payments.
+
+4. **Firebase Integration:**
+   - Initialize Firebase with the following credentials:
+     ```
+     apiKey: "AIzaSyD7NedynjEGpfMevRcG81n2gv1tLvT1g-k"
+     authDomain: "flavorfleet-a9b09.firebaseapp.com"
+     projectId: "flavorfleet-a9b09"
+     storageBucket: "flavorfleet-a9b09.firebasestorage.app"
+     messagingSenderId: "38387869918"
+     appId: "1:38387869918:web:12f100d594eb8120673a4f"
+     measurementId: "G-ERNMEW6E0J"
+     ```
+   - Use modular Firebase SDK imports (v10+).
+   - Export `auth` and `db` for use across the app.
+
+5. **Project Structure:**
