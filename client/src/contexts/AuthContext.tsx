@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await authSignIn(email, password);
   };
 
-  const signUp = async (email: string, password: string, name: string, role: 'customer' | 'driver') => {
+  const signUp = async (email: string, password: string, name: string, role: 'customer' | 'driver' | 'restaurant') => {
     await authSignUp(email, password, name, role);
   };
 

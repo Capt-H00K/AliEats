@@ -11,11 +11,14 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
   const { user, signOut } = useAuth();
 
-  const tabs = [
+  const allTabs = [
     { id: 'customer', label: 'Customer', icon: Utensils },
     { id: 'driver', label: 'Driver', icon: Truck },
     { id: 'restaurant', label: 'Restaurant', icon: Store },
   ];
+
+  // Filter tabs based on user role
+  const tabs = user ? allTabs.filter(tab => tab.id === user.role) : [];
 
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-40 hidden md:block">

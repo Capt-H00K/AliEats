@@ -18,11 +18,14 @@ export const MobileNav: React.FC<MobileNavProps> = ({
 }) => {
   const { user, signOut } = useAuth();
 
-  const tabs = [
+  const allTabs = [
     { id: 'customer', label: 'Customer Dashboard', icon: Utensils },
     { id: 'driver', label: 'Driver Dashboard', icon: Truck },
     { id: 'restaurant', label: 'Restaurant Dashboard', icon: Store },
   ];
+
+  // Filter tabs based on user role
+  const tabs = user ? allTabs.filter(tab => tab.id === user.role) : [];
 
   const handleTabChange = (tab: string) => {
     onTabChange(tab);

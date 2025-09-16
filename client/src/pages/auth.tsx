@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,16 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const AuthPage: React.FC = () => {
-  const { signIn, signUp, loading } = useAuth();
+  const { signIn, signUp, loading, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     name: '',
-    role: 'customer' as 'customer' | 'driver',
+    role: 'customer' as 'customer' | 'driver' | 'restaurant',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,16 +30,10 @@ export const AuthPage: React.FC = () => {
     try {
       if (isLogin) {
         await signIn(formData.email, formData.password);
-        toast({
-          title: "Welcome back!",
-          description: "You have been signed in successfully.",
-        });
+        toast({ title: "Welcome back!", description: "You have been signed in successfully." });
       } else {
         await signUp(formData.email, formData.password, formData.name, formData.role);
-        toast({
-          title: "Account created!",
-          description: "Your account has been created successfully.",
-        });
+        toast({ title: "Account created!", description: "Your account has been created successfully." });
       }
     } catch (error: any) {
       toast({
@@ -49,6 +45,20 @@ export const AuthPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Navigate when user context updates
+  useEffect(() => {
+    if (user) {
+      navigate(
+        user.role === 'customer'
+          ? '/customer'
+          : user.role === 'driver'
+          ? '/driver'
+          : '/restaurant',
+        { replace: true }
+      );
+    }
+  }, [user, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -74,9 +84,7 @@ export const AuthPage: React.FC = () => {
         <button
           onClick={() => setIsLogin(true)}
           className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors ${
-            isLogin
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            isLogin ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
           }`}
           data-testid="button-login-tab"
         >
@@ -85,9 +93,7 @@ export const AuthPage: React.FC = () => {
         <button
           onClick={() => setIsLogin(false)}
           className={`flex-1 px-4 py-2 rounded-md font-medium transition-colors ${
-            !isLogin
-              ? 'bg-card text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
+            !isLogin ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
           }`}
           data-testid="button-register-tab"
         >
@@ -142,9 +148,9 @@ export const AuthPage: React.FC = () => {
             {!isLogin && (
               <div>
                 <Label htmlFor="role">I am a:</Label>
-                <Select 
-                  value={formData.role} 
-                  onValueChange={(value: 'customer' | 'driver') => handleInputChange('role', value)}
+                <Select
+                  value={formData.role}
+                  onValueChange={(value: 'customer' | 'driver' | 'restaurant') => handleInputChange('role', value)}
                 >
                   <SelectTrigger data-testid="select-role">
                     <SelectValue placeholder="Select your role" />
@@ -152,6 +158,7 @@ export const AuthPage: React.FC = () => {
                   <SelectContent>
                     <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="driver">Driver</SelectItem>
+                    <SelectItem value="restaurant">Restaurant</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -163,9 +170,7 @@ export const AuthPage: React.FC = () => {
               disabled={isSubmitting}
               data-testid={isLogin ? "button-sign-in" : "button-sign-up"}
             >
-              {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isLogin ? 'Sign In' : 'Create Account'}
             </Button>
           </form>
