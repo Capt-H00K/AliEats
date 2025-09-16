@@ -44,3 +44,10 @@ export interface AuthContextType {
   signUp: (email: string, password: string, name: string, role: 'customer' | 'driver') => Promise<void>;
   signOut: () => Promise<void>;
 }
+
+export interface Restaurant {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+}

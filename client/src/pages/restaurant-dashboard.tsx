@@ -1,15 +1,16 @@
+// src/pages/restaurant-dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { OrderCard } from '@/components/orders/OrderCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Order, MenuItem } from '@/types';
+import { Order, MenuItem, OrderStatus } from '@/types';
 import {
-  updateOrder,
   subscribeToOrders,
   subscribeToMenuItems,
+  updateOrder,
   deleteMenuItem
-} from '@/services/firestore';
+} from '@/services/realtime';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Clock, Utensils, CheckCircle, TrendingUp, Plus, Edit, Trash2 } from 'lucide-react';
@@ -24,18 +25,20 @@ export const RestaurantDashboard: React.FC = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed'>('pending');
-
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
-  // Subscribe to orders and menu items in real-time
+  // Subscribe to orders & menu items in Realtime Database
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribeOrders = subscribeToOrders((fetchedOrders) => {
-      setOrders(fetchedOrders);
-      setLoading(false);
-    }, { restaurantId: user.id });
+    const unsubscribeOrders = subscribeToOrders(
+      (fetchedOrders) => {
+        setOrders(fetchedOrders);
+        setLoading(false);
+      },
+      { restaurantId: user.id }
+    );
 
     const unsubscribeMenu = subscribeToMenuItems(user.id, (fetchedMenuItems) => {
       setMenuItems(fetchedMenuItems);
@@ -47,11 +50,26 @@ export const RestaurantDashboard: React.FC = () => {
     };
   }, [user]);
 
-  const handleUpdateStatus = async (orderId: string, status: Order['status']) => {
+  const handleUpdateStatus = async (orderId: string, status: OrderStatus) => {
     try {
-      const updates: any = { status };
-      if (status === 'accepted') updates.status = 'preparing';
-      await updateOrder(orderId, updates);
+      let newStatus: OrderStatus;
+
+      // move to next logical status
+      switch (status) {
+        case 'pending':
+          newStatus = 'preparing';
+          break;
+        case 'preparing':
+          newStatus = 'ready';
+          break;
+        case 'ready':
+          newStatus = 'picked_up'; // or 'delivered' depending on your workflow
+          break;
+        default:
+          newStatus = status;
+      }
+
+      await updateOrder(orderId, { status: newStatus });
       toast({ title: 'Status updated', description: 'Order status has been updated' });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to update order status', variant: 'destructive' });
@@ -68,16 +86,16 @@ export const RestaurantDashboard: React.FC = () => {
     }
   };
 
-  const getFilteredOrders = (status: string) => {
+  const getFilteredOrders = (status: 'pending' | 'preparing' | 'ready' | 'completed') => {
     switch (status) {
       case 'pending':
         return orders.filter(order => order.status === 'pending');
       case 'preparing':
-        return orders.filter(order => order.status === 'accepted' || order.status === 'preparing');
+        return orders.filter(order => order.status === 'preparing');
       case 'ready':
         return orders.filter(order => order.status === 'ready' || order.status === 'picked_up');
       case 'completed':
-        return orders.filter(order => order.status === 'delivered');
+        return orders.filter(order => order.status === 'completed');
       default:
         return [];
     }
@@ -85,10 +103,10 @@ export const RestaurantDashboard: React.FC = () => {
 
   // Stats
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
-  const preparingOrders = orders.filter(order => order.status === 'accepted' || order.status === 'preparing').length;
-  const readyOrders = orders.filter(order => order.status === 'ready').length;
+  const preparingOrders = orders.filter(order => order.status === 'preparing').length;
+  const readyOrders = orders.filter(order => order.status === 'ready' || order.status === 'picked_up').length;
   const todayRevenue = orders
-    .filter(order => new Date(order.createdAt).toDateString() === new Date().toDateString() &&
+    .filter(order => new Date(order.createdAt ?? new Date()).toDateString() === new Date().toDateString() &&
       ['delivered', 'picked_up', 'ready'].includes(order.status))
     .reduce((sum, order) => sum + order.totalPrice, 0);
 
@@ -103,6 +121,7 @@ export const RestaurantDashboard: React.FC = () => {
 
   return (
     <div>
+      {/* Dashboard Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold mb-2">Restaurant Dashboard</h2>
@@ -172,7 +191,7 @@ export const RestaurantDashboard: React.FC = () => {
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-secondary hover:text-secondary-foreground'
                 }`}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'pending' | 'preparing' | 'ready' | 'completed')}
               >
                 {tab.label}
               </Button>
@@ -200,7 +219,7 @@ export const RestaurantDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Menu Items List */}
+      {/* Menu Items */}
       <Card className="mb-8">
         <CardContent className="p-6">
           <h3 className="text-xl font-bold mb-4">Menu Items</h3>
@@ -235,7 +254,7 @@ export const RestaurantDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Menu Form Modal */}
+      {/* Menu Modal */}
       <Modal
         isOpen={isMenuModalOpen}
         onClose={() => setIsMenuModalOpen(false)}
@@ -250,7 +269,3 @@ export const RestaurantDashboard: React.FC = () => {
     </div>
   );
 };
-
-
-
-

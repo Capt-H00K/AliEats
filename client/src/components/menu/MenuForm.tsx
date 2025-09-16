@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { addMenuItem, updateMenuItem } from '@/services/firestore';
+import { addMenuItem, updateMenuItem } from '@/services/realtime';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface MenuFormProps {
@@ -63,6 +63,7 @@ export const MenuForm: React.FC<MenuFormProps> = ({ item, onClose, onSave }) => 
         toast({ title: 'Updated', description: `${name} updated.` });
       } else {
         await addMenuItem(restaurantId, {
+          restaurantId: user.id,
           name,
           description,
           price: priceNumber,

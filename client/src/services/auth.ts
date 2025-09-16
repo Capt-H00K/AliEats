@@ -1,49 +1,102 @@
+// src/services/auth.ts
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut
-} from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { User } from '@/types';
+} from "firebase/auth";
+import { ref, set, get, child } from "firebase/database";
+import { auth, database } from "@/lib/firebase";
+import { User, Restaurant } from "@/types";
 
+// ============================
+// SIGN IN
+// ============================
 export const signIn = async (email: string, password: string) => {
   return await signInWithEmailAndPassword(auth, email, password);
 };
 
-export const signUp = async (email: string, password: string, name: string, role: 'customer' | 'driver') => {
+// ============================
+// SIGN UP
+// ============================
+export const signUp = async (
+  email: string, 
+  password: string, 
+  name: string, 
+  role: "customer" | "driver" | "restaurant"
+) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
-  
-  // Create user profile in Firestore
-  const userProfile: Omit<User, 'id'> = {
+
+  // Use a local Date variable to satisfy TypeScript
+  const createdAt = new Date();
+
+  // Prepare user profile
+  const userProfile: Omit<User, "id"> = {
     email,
     name,
     role,
-    createdAt: new Date(),
+    createdAt, // TS Date
   };
-  
-  await setDoc(doc(db, 'users', user.uid), userProfile);
-  
+
+  // Save user profile in Realtime Database as ISO string
+  await set(ref(database, `users/${user.uid}`), {
+    id: user.uid,
+    email,
+    name,
+    role,
+    createdAt: createdAt.toISOString(), // store as string
+  });
+
+  // Automatically create a restaurant node if the user is a restaurant
+  if (role === "restaurant") {
+    const restaurantRef = ref(database, `restaurants/${user.uid}`);
+    const now = new Date();
+
+    const defaultRestaurant: Omit<Restaurant, "id"> = {
+      name,
+      description: "Your restaurant description here",
+      image: "https://via.placeholder.com/150",
+      createdAt: now, // TS Date
+      updatedAt: now, // TS Date
+    };
+
+    // Save restaurant node as ISO strings in DB
+    await set(restaurantRef, {
+      ...defaultRestaurant,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    });
+  }
+
   return userCredential;
 };
 
+// ============================
+// SIGN OUT
+// ============================
 export const signOut = async () => {
   return await firebaseSignOut(auth);
 };
 
+// ============================
+// GET USER PROFILE
+// ============================
 export const getUserProfile = async (uid: string): Promise<User> => {
-  const userDoc = await getDoc(doc(db, 'users', uid));
-  if (!userDoc.exists()) {
-    throw new Error('User profile not found');
+  const dbRef = ref(database);
+  const snapshot = await get(child(dbRef, `users/${uid}`));
+
+  if (!snapshot.exists()) {
+    throw new Error("User profile not found");
   }
-  
-  const userData = userDoc.data();
+
+  const userData = snapshot.val();
+
+  // Convert ISO string back to Date for TypeScript
   return {
     id: uid,
     email: userData.email,
     name: userData.name,
     role: userData.role,
-    createdAt: userData.createdAt.toDate(),
+    createdAt: new Date(userData.createdAt),
   };
 };
