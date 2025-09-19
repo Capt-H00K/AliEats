@@ -1,4 +1,3 @@
-// src/components/menu/MenuCard.tsx
 import React from 'react';
 import { MenuItem } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -66,5 +65,3 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     </div>
   );
 };
-
-
