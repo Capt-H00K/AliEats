@@ -25,12 +25,20 @@ export const getRestaurants = async (): Promise<Restaurant[]> => {
 };
 
 // Add new restaurant (for sign-up flow)
-export const addRestaurant = async (restaurant: Omit<Restaurant, "id">) => {
-  const restaurantsRef = ref(database, "restaurants");
-  const newRef = push(restaurantsRef);
-  await set(newRef, restaurant);
-  return { id: newRef.key!, ...restaurant };
+// src/services/realtime.ts
+export const addRestaurant = async (
+  restaurant: Omit<Restaurant, "id">,
+  uid: string
+) => {
+  const restaurantRef = ref(database, `restaurants/${uid}`);
+  await set(restaurantRef, {
+    ...restaurant,
+    createdAt: restaurant.createdAt.toISOString(),
+    updatedAt: restaurant.updatedAt.toISOString(),
+  });
+  return { id: uid, ...restaurant };
 };
+
 
 // ============================
 // MENU ITEMS (per restaurant)
@@ -39,29 +47,54 @@ export const getMenuItems = async (restaurantId: string): Promise<MenuItem[]> =>
   const snapshot = await get(ref(database, `restaurants/${restaurantId}/menu`));
   if (!snapshot.exists()) return [];
   const data = snapshot.val();
-  return Object.entries(data).map(([id, value]) => ({
-    id,
-    ...(value as Omit<MenuItem, "id">),
-  }));
+
+  return Object.entries(data).map(([id, value]) => {
+    const item = value as Partial<MenuItem>;
+    return {
+      id,
+      restaurantId: item.restaurantId ?? restaurantId, // fallback if missing
+      name: item.name ?? "Unnamed Item",
+      description: item.description ?? "",
+      price: item.price ?? 0,
+      image: item.image ?? "",
+      category: item.category ?? "Uncategorized",
+      available: item.available !== false, // default true
+    };
+  });
 };
 
 export const addMenuItem = async (
   restaurantId: string,
-  item: Omit<MenuItem, "id">
+  item: Omit<MenuItem, "id" | "restaurantId">
 ) => {
   const menuRef = ref(database, `restaurants/${restaurantId}/menu`);
   const newRef = push(menuRef);
-  await set(newRef, item);
-  return { id: newRef.key!, ...item };
+
+  // Include restaurantId before saving
+  const itemWithRestaurantId = {
+    ...item,
+    restaurantId,
+  };
+
+  await set(newRef, itemWithRestaurantId);
+
+  return { id: newRef.key!, ...itemWithRestaurantId };
 };
 
 export const updateMenuItem = async (
   restaurantId: string,
   itemId: string,
-  updates: Partial<MenuItem>
+  updates: Partial<Omit<MenuItem, "id" | "restaurantId">>
 ) => {
   const itemRef = ref(database, `restaurants/${restaurantId}/menu/${itemId}`);
-  await update(itemRef, updates);
+
+  // Ensure restaurantId is not removed
+  const updatesWithRestaurantId = {
+    ...updates,
+    restaurantId,
+  };
+
+  await update(itemRef, updatesWithRestaurantId);
 };
 
 export const deleteMenuItem = async (restaurantId: string, itemId: string) => {
@@ -79,11 +112,22 @@ export const subscribeToMenuItems = (
       callback([]);
       return;
     }
+
     const data = snapshot.val();
-    const items = Object.entries(data).map(([id, value]) => ({
-      id,
-      ...(value as Omit<MenuItem, "id">),
-    }));
+    const items = Object.entries(data).map(([id, value]) => {
+      const item = value as Partial<MenuItem>;
+      return {
+        id,
+        restaurantId: item.restaurantId ?? restaurantId,
+        name: item.name ?? "Unnamed Item",
+        description: item.description ?? "",
+        price: item.price ?? 0,
+        image: item.image ?? "",
+        category: item.category ?? "Uncategorized",
+        available: item.available !== false,
+      };
+    });
+
     callback(items);
   });
 };

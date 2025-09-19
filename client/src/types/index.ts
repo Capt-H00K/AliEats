@@ -8,6 +8,7 @@ export interface User {
 
 export interface MenuItem {
   id: string;
+  restaurantId: string;
   name: string;
   description: string;
   price: number;

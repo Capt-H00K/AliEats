@@ -4,22 +4,23 @@ import { Restaurant } from '@/types';
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
-  onSelect: (restaurantId: string) => void;
+  // now accepts the full Restaurant object
+  onSelect: (restaurant: Restaurant) => void;
 }
 
 export const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onSelect }) => {
   return (
     <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden hover:shadow-lg transition-shadow">
       <img 
-        src={restaurant.image} 
-        alt={restaurant.name} 
+        src={restaurant.image || "/placeholder.png"} 
+        alt={restaurant.name}
         className="w-full h-48 object-cover"
       />
       <div className="p-4">
         <h3 className="font-semibold text-lg mb-2">{restaurant.name}</h3>
         <p className="text-muted-foreground text-sm mb-3">{restaurant.description}</p>
         <Button
-          onClick={() => onSelect(restaurant.id)}
+          onClick={() => onSelect(restaurant)} // full object
           className="bg-primary text-primary-foreground hover:bg-primary/90 w-full"
         >
           View Menu
@@ -28,3 +29,4 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onSe
     </div>
   );
 };
+

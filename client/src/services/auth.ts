@@ -6,7 +6,7 @@ import {
 } from "firebase/auth";
 import { ref, set, get, child } from "firebase/database";
 import { auth, database } from "@/lib/firebase";
-import { User, Restaurant } from "@/types";
+import { User } from "@/types";
 
 // ============================
 // SIGN IN
@@ -27,46 +27,19 @@ export const signUp = async (
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Use a local Date variable to satisfy TypeScript
   const createdAt = new Date();
 
-  // Prepare user profile
-  const userProfile: Omit<User, "id"> = {
-    email,
-    name,
-    role,
-    createdAt, // TS Date
-  };
-
-  // Save user profile in Realtime Database as ISO string
+  // Save user profile in Realtime Database
   await set(ref(database, `users/${user.uid}`), {
     id: user.uid,
     email,
     name,
     role,
-    createdAt: createdAt.toISOString(), // store as string
+    createdAt: createdAt.toISOString(),
   });
 
-  // Automatically create a restaurant node if the user is a restaurant
-  if (role === "restaurant") {
-    const restaurantRef = ref(database, `restaurants/${user.uid}`);
-    const now = new Date();
-
-    const defaultRestaurant: Omit<Restaurant, "id"> = {
-      name,
-      description: "Your restaurant description here",
-      image: "https://via.placeholder.com/150",
-      createdAt: now, // TS Date
-      updatedAt: now, // TS Date
-    };
-
-    // Save restaurant node as ISO strings in DB
-    await set(restaurantRef, {
-      ...defaultRestaurant,
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-    });
-  }
+  // DO NOT create restaurant here anymore
+  // The restaurant node will be created in AuthContext.tsx via addRestaurant
 
   return userCredential;
 };
@@ -91,7 +64,6 @@ export const getUserProfile = async (uid: string): Promise<User> => {
 
   const userData = snapshot.val();
 
-  // Convert ISO string back to Date for TypeScript
   return {
     id: uid,
     email: userData.email,
