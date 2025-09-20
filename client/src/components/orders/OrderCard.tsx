@@ -8,13 +8,15 @@ interface OrderCardProps {
   userRole: 'customer' | 'driver' | 'restaurant';
   onUpdateStatus?: (orderId: string, status: Order['status']) => void;
   onConfirmPayment?: (orderId: string) => void;
+  onAcceptOrder?: () => void; // NEW: For driver to accept the order
 }
 
 export const OrderCard: React.FC<OrderCardProps> = ({ 
   order, 
   userRole, 
   onUpdateStatus, 
-  onConfirmPayment 
+  onConfirmPayment,
+  onAcceptOrder,
 }) => {
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -131,6 +133,18 @@ export const OrderCard: React.FC<OrderCardProps> = ({
           {/* Driver Actions */}
           {userRole === 'driver' && (
             <>
+              {/* Accept order if status is pending */}
+              {order.status === 'pending' && !!onAcceptOrder && (
+                <Button
+                  onClick={onAcceptOrder}
+                  className="bg-accent text-accent-foreground"
+                  size="sm"
+                  data-testid={`button-accept-order-${order.id}`}
+                >
+                  <Check size={16} className="mr-2" />
+                  Accept Order
+                </Button>
+              )}
               {order.status === 'ready' && (
                 <Button
                   onClick={() => onUpdateStatus?.(order.id, 'picked_up')}

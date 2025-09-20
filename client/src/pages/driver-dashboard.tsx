@@ -4,7 +4,8 @@ import { OrderCard } from '@/components/orders/OrderCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Order } from '@/types';
-import { updateOrder, subscribeToOrders } from '@/services/firestore';
+import { subscribeToOrders } from '@/services/firestore';
+import { driverAcceptOrderRealtime } from '@/services/realtimeOrders';
 import { useToast } from '@/hooks/use-toast';
 import { Package, DollarSign, Star, TrendingUp } from 'lucide-react';
 
@@ -56,43 +57,24 @@ export const DriverDashboard: React.FC = () => {
     }
   }, [user, toast]);
 
-  const handleUpdateStatus = async (orderId: string, status: Order['status']) => {
+  // New: Handler for accepting an order (uses realtime DB)
+  const handleAcceptOrder = async (order: Order) => {
     if (!user?.id) return;
-
     try {
-      const updates: Partial<Order> = { status };
-
-      // Assign driver when picking up
-      if (status === 'picked_up') {
-        updates.driverId = user.id;
-        updates.driverName = user.name;
-      }
-
-      await updateOrder(orderId, updates);
+      await driverAcceptOrderRealtime({
+        orderId: order.id,
+        driverId: user.id,
+        restaurantId: order.restaurantId,
+        orderAmount: order.totalPrice,
+      });
       toast({
-        title: "Status updated",
-        description: `Order status has been updated to ${status}`,
+        title: "Order accepted",
+        description: `You've accepted order #${order.id}`,
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update order status",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleConfirmPayment = async (orderId: string) => {
-    try {
-      await updateOrder(orderId, { paymentConfirmed: true });
-      toast({
-        title: "Payment confirmed",
-        description: "Payment has been marked as received",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to confirm payment",
+        description: "Failed to accept order.",
         variant: "destructive",
       });
     }
@@ -198,8 +180,9 @@ export const DriverDashboard: React.FC = () => {
                   key={order.id}
                   order={order}
                   userRole="driver"
-                  onUpdateStatus={handleUpdateStatus}
-                  onConfirmPayment={handleConfirmPayment}
+                  // Add the accept handler as a prop if your OrderCard consumes it
+                  onAcceptOrder={() => handleAcceptOrder(order)}
+                  // You may still pass status update/confirm payment handlers
                 />
               ))}
             </div>
