@@ -48,6 +48,7 @@ export interface Order {
   paymentMethod: PaymentMethod;
   paymentConfirmed: boolean;
   driverId?: string;
+  driverName?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

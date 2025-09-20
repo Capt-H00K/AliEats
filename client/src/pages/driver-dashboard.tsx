@@ -15,14 +15,13 @@ export const DriverDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return; // <-- ensures we have a valid user id before subscribing
 
     const unsubscribe = subscribeToOrders(
       (fetchedOrders) => {
         // Filter orders assigned to this driver or ready for pickup
-        const driverOrders = fetchedOrders.filter(order => 
-          order.driverId === user.id || 
-          (order.status === 'ready' && !order.driverId)
+        const driverOrders = fetchedOrders.filter(order =>
+          order?.driverId === user.id || (order?.status === 'ready' && !order?.driverId)
         );
         setOrders(driverOrders);
         setLoading(false);
@@ -34,15 +33,17 @@ export const DriverDashboard: React.FC = () => {
   }, [user]);
 
   const handleUpdateStatus = async (orderId: string, status: Order['status']) => {
+    if (!user?.id) return;
+
     try {
-      const updates: any = { status };
-      
+      const updates: Partial<Order> = { status };
+
       // Assign driver when picking up
-      if (status === 'picked_up' && user) {
+      if (status === 'picked_up') {
         updates.driverId = user.id;
         updates.driverName = user.name;
       }
-      
+
       await updateOrder(orderId, updates);
       toast({
         title: "Status updated",
@@ -73,16 +74,17 @@ export const DriverDashboard: React.FC = () => {
     }
   };
 
-  // Calculate stats
-  const todayOrders = orders.filter(order => 
-    new Date(order.createdAt).toDateString() === new Date().toDateString()
+  // Calculate stats safely
+  const todayOrders = orders.filter(order =>
+    new Date(order.createdAt || '').toDateString() === new Date().toDateString()
   );
-  const completedOrders = orders.filter(order => order.status === 'delivered');
-  const totalEarnings = completedOrders.reduce((sum, order) => sum + (order.totalPrice * 0.15), 0); // 15% commission
+  const completedOrders = orders.filter(order => order.status === 'completed');
+  const totalEarnings = completedOrders.reduce(
+    (sum, order) => sum + (order.totalPrice || 0) * 0.15,
+    0
+  );
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div>
@@ -164,7 +166,7 @@ export const DriverDashboard: React.FC = () => {
           <h3 className="text-xl font-semibold mb-6" data-testid="text-orders-title">
             Available & Assigned Orders
           </h3>
-          
+
           {orders.length > 0 ? (
             <div className="space-y-4">
               {orders.map(order => (
@@ -187,3 +189,4 @@ export const DriverDashboard: React.FC = () => {
     </div>
   );
 };
+
