@@ -8,13 +8,13 @@ interface OrderCardProps {
   userRole: 'customer' | 'driver' | 'restaurant';
   onUpdateStatus?: (orderId: string, status: Order['status']) => void;
   onConfirmPayment?: (orderId: string) => void;
-  onAcceptOrder?: () => void; // NEW: For driver to accept the order
+  onAcceptOrder?: () => void; // For driver to accept the order
 }
 
-export const OrderCard: React.FC<OrderCardProps> = ({ 
-  order, 
-  userRole, 
-  onUpdateStatus, 
+export const OrderCard: React.FC<OrderCardProps> = ({
+  order,
+  userRole,
+  onUpdateStatus,
   onConfirmPayment,
   onAcceptOrder,
 }) => {
@@ -59,37 +59,47 @@ export const OrderCard: React.FC<OrderCardProps> = ({
     }
   };
 
+  // Defensive for possibly undefined id and createdAt
+  const orderId = order.id ?? '';
+  const orderIdShort = order.id ? order.id.slice(-8) : 'N/A';
+  const createdAtString =
+    order.createdAt instanceof Date
+      ? order.createdAt.toLocaleString()
+      : order.createdAt
+      ? new Date(order.createdAt).toLocaleString()
+      : 'Unknown';
+
   return (
-    <div className="border border-border rounded-lg p-4" data-testid={`card-order-${order.id}`}>
+    <div className="border border-border rounded-lg p-4" data-testid={`card-order-${orderId}`}>
       <div className="flex justify-between items-start mb-3">
         <div>
-          <h4 className="font-semibold text-lg" data-testid={`text-order-id-${order.id}`}>
-            Order #{order.id.slice(-8)}
+          <h4 className="font-semibold text-lg" data-testid={`text-order-id-${orderId}`}>
+            Order #{orderIdShort}
           </h4>
           {userRole !== 'customer' && (
-            <p className="text-muted-foreground" data-testid={`text-customer-${order.id}`}>
+            <p className="text-muted-foreground" data-testid={`text-customer-${orderId}`}>
               Customer: {order.customerName}
             </p>
           )}
           {order.customerAddress && (
-            <p className="text-sm text-muted-foreground flex items-center" data-testid={`text-address-${order.id}`}>
+            <p className="text-sm text-muted-foreground flex items-center" data-testid={`text-address-${orderId}`}>
               <MapPin size={12} className="mr-1" />
               {order.customerAddress}
             </p>
           )}
-          <p className="text-sm text-muted-foreground flex items-center" data-testid={`text-time-${order.id}`}>
+          <p className="text-sm text-muted-foreground flex items-center" data-testid={`text-time-${orderId}`}>
             <Clock size={12} className="mr-1" />
-            {new Date(order.createdAt).toLocaleString()}
+            {createdAtString}
           </p>
         </div>
         <div className="text-right">
-          <span 
+          <span
             className={`px-2 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}
-            data-testid={`status-${order.id}`}
+            data-testid={`status-${orderId}`}
           >
             {getStatusLabel(order.status)}
           </span>
-          <p className="text-lg font-bold mt-1" data-testid={`text-total-${order.id}`}>
+          <p className="text-lg font-bold mt-1" data-testid={`text-total-${orderId}`}>
             ${order.totalPrice.toFixed(2)}
           </p>
         </div>
@@ -97,8 +107,8 @@ export const OrderCard: React.FC<OrderCardProps> = ({
 
       <div className="mb-3">
         <p className="text-sm font-medium mb-1">Items:</p>
-        <div className="text-sm text-muted-foreground" data-testid={`text-items-${order.id}`}>
-          {order.items.map((item, index) => (
+        <div className="text-sm text-muted-foreground" data-testid={`text-items-${orderId}`}>
+          {order.items?.map((item, index) => (
             <span key={index}>
               {item.quantity}x {item.menuItem.name}
               {index < order.items.length - 1 ? ', ' : ''}
@@ -114,16 +124,14 @@ export const OrderCard: React.FC<OrderCardProps> = ({
           ) : (
             <CreditCard size={16} className="mr-2 text-muted-foreground" />
           )}
-          <span data-testid={`text-payment-method-${order.id}`}>
+          <span data-testid={`text-payment-method-${orderId}`}>
             {order.paymentMethod === 'cash' ? 'Cash on Delivery' : 'Bank Transfer'}
           </span>
-          <span 
+          <span
             className={`ml-2 px-2 py-1 rounded-full text-xs ${
-              order.paymentConfirmed 
-                ? 'bg-accent/10 text-accent' 
-                : 'bg-yellow-100 text-yellow-800'
+              order.paymentConfirmed ? 'bg-accent/10 text-accent' : 'bg-yellow-100 text-yellow-800'
             }`}
-            data-testid={`status-payment-${order.id}`}
+            data-testid={`status-payment-${orderId}`}
           >
             {order.paymentConfirmed ? 'Paid' : 'Pending'}
           </span>
@@ -139,7 +147,7 @@ export const OrderCard: React.FC<OrderCardProps> = ({
                   onClick={onAcceptOrder}
                   className="bg-accent text-accent-foreground"
                   size="sm"
-                  data-testid={`button-accept-order-${order.id}`}
+                  data-testid={`button-accept-order-${orderId}`}
                 >
                   <Check size={16} className="mr-2" />
                   Accept Order
@@ -147,37 +155,40 @@ export const OrderCard: React.FC<OrderCardProps> = ({
               )}
               {order.status === 'ready' && (
                 <Button
-                  onClick={() => onUpdateStatus?.(order.id, 'picked_up')}
+                  onClick={() => onUpdateStatus?.(orderId, 'picked_up')}
                   variant="secondary"
                   size="sm"
-                  data-testid={`button-pickup-${order.id}`}
+                  data-testid={`button-pickup-${orderId}`}
                 >
                   <Truck size={16} className="mr-2" />
                   Picked Up
                 </Button>
               )}
-              {order.status === 'picked_up' && order.paymentMethod === 'cash' && !order.paymentConfirmed && (
-                <Button
-                  onClick={() => onConfirmPayment?.(order.id)}
-                  className="bg-primary text-primary-foreground"
-                  size="sm"
-                  data-testid={`button-confirm-payment-${order.id}`}
-                >
-                  <DollarSign size={16} className="mr-2" />
-                  Confirm Payment
-                </Button>
-              )}
-              {order.status === 'picked_up' && (order.paymentMethod === 'bank' || order.paymentConfirmed) && (
-                <Button
-                  onClick={() => onUpdateStatus?.(order.id, 'delivered')}
-                  className="bg-accent text-accent-foreground"
-                  size="sm"
-                  data-testid={`button-deliver-${order.id}`}
-                >
-                  <Check size={16} className="mr-2" />
-                  Delivered
-                </Button>
-              )}
+              {order.status === 'picked_up' &&
+                order.paymentMethod === 'cash' &&
+                !order.paymentConfirmed && (
+                  <Button
+                    onClick={() => onConfirmPayment?.(orderId)}
+                    className="bg-primary text-primary-foreground"
+                    size="sm"
+                    data-testid={`button-confirm-payment-${orderId}`}
+                  >
+                    <DollarSign size={16} className="mr-2" />
+                    Confirm Payment
+                  </Button>
+                )}
+              {order.status === 'picked_up' &&
+                (order.paymentMethod === 'bank' || order.paymentConfirmed) && (
+                  <Button
+                    onClick={() => onUpdateStatus?.(orderId, 'delivered')}
+                    className="bg-accent text-accent-foreground"
+                    size="sm"
+                    data-testid={`button-deliver-${orderId}`}
+                  >
+                    <Check size={16} className="mr-2" />
+                    Delivered
+                  </Button>
+                )}
             </>
           )}
 
@@ -187,18 +198,18 @@ export const OrderCard: React.FC<OrderCardProps> = ({
               {order.status === 'pending' && (
                 <>
                   <Button
-                    onClick={() => onUpdateStatus?.(order.id, 'rejected')}
+                    onClick={() => onUpdateStatus?.(orderId, 'rejected')}
                     variant="destructive"
                     size="sm"
-                    data-testid={`button-reject-${order.id}`}
+                    data-testid={`button-reject-${orderId}`}
                   >
                     Reject
                   </Button>
                   <Button
-                    onClick={() => onUpdateStatus?.(order.id, 'accepted')}
+                    onClick={() => onUpdateStatus?.(orderId, 'accepted')}
                     className="bg-accent text-accent-foreground"
                     size="sm"
-                    data-testid={`button-accept-${order.id}`}
+                    data-testid={`button-accept-${orderId}`}
                   >
                     <Check size={16} className="mr-2" />
                     Accept
@@ -207,10 +218,10 @@ export const OrderCard: React.FC<OrderCardProps> = ({
               )}
               {(order.status === 'accepted' || order.status === 'preparing') && (
                 <Button
-                  onClick={() => onUpdateStatus?.(order.id, 'ready')}
+                  onClick={() => onUpdateStatus?.(orderId, 'ready')}
                   className="bg-accent text-accent-foreground"
                   size="sm"
-                  data-testid={`button-mark-ready-${order.id}`}
+                  data-testid={`button-mark-ready-${orderId}`}
                 >
                   <Check size={16} className="mr-2" />
                   Mark as Ready

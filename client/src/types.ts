@@ -34,7 +34,16 @@ export interface CartItem {
 export type PaymentMethod = 'cash' | 'bank';
 
 // ========== ORDER ==========
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'picked_up' | 'completed' | 'cancelled';
+export type OrderStatus =
+  | 'pending'
+  | 'accepted'
+  | 'preparing'
+  | 'ready'
+  | 'picked_up'
+  | 'delivered'
+  | 'rejected'
+  | 'completed'
+  | 'cancelled';
 
 export interface Order {
   id?: string; // Firestore auto ID

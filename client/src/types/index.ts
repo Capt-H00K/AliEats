@@ -31,7 +31,15 @@ export interface Order {
   driverName?: string;
   items: CartItem[];
   totalPrice: number;
-  status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'picked_up' | 'delivered' | 'rejected';
+  status: 'pending'
+  | 'accepted'
+  | 'preparing'
+  | 'ready'
+  | 'picked_up'
+  | 'delivered'
+  | 'rejected'
+  | 'completed'
+  | 'cancelled';
   paymentMethod: 'cash' | 'bank';
   paymentConfirmed: boolean;
   createdAt: Date;
