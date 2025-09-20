@@ -15,22 +15,46 @@ export const DriverDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.id) return; // <-- ensures we have a valid user id before subscribing
+    // Defensive checks for user, role, and id
+    if (!user) {
+      console.warn("No user in context for DriverDashboard");
+      setLoading(false);
+      return;
+    }
+    if (user.role !== "driver") {
+      console.warn("User is not a driver, role:", user.role);
+      setLoading(false);
+      return;
+    }
+    if (!user.id) {
+      console.warn("Driver user has no id!", user);
+      setLoading(false);
+      return;
+    }
 
-    const unsubscribe = subscribeToOrders(
-      (fetchedOrders) => {
-        // Filter orders assigned to this driver or ready for pickup
-        const driverOrders = fetchedOrders.filter(order =>
-          order?.driverId === user.id || (order?.status === 'ready' && !order?.driverId)
-        );
-        setOrders(driverOrders);
-        setLoading(false);
-      },
-      { driverId: user.id }
-    );
+    try {
+      const unsubscribe = subscribeToOrders(
+        (fetchedOrders) => {
+          // Filter orders assigned to this driver or ready for pickup
+          const driverOrders = fetchedOrders.filter(order =>
+            order?.driverId === user.id || (order?.status === 'ready' && !order?.driverId)
+          );
+          setOrders(driverOrders);
+          setLoading(false);
+        },
+        { driverId: user.id }
+      );
 
-    return unsubscribe;
-  }, [user]);
+      return unsubscribe;
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to subscribe to driver orders",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  }, [user, toast]);
 
   const handleUpdateStatus = async (orderId: string, status: Order['status']) => {
     if (!user?.id) return;
@@ -189,4 +213,3 @@ export const DriverDashboard: React.FC = () => {
     </div>
   );
 };
-
