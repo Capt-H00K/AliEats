@@ -123,16 +123,25 @@ export const subscribeToMenuItems = (
 // ============================
 export const createOrder = async (
   order: Omit<Order, "id" | "createdAt" | "updatedAt">
-) => {
+): Promise<Order> => {
   const ordersRef = ref(database, "orders");
   const newOrderRef = push(ordersRef);
-  const orderData = {
+  const now = new Date();
+
+  const orderData: Order = {
     ...order,
-    id: newOrderRef.key,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    id: newOrderRef.key!,
+    createdAt: now,
+    updatedAt: now,
   };
-  await set(newOrderRef, orderData);
+
+  // Save with ISO strings in Firebase
+  await set(newOrderRef, {
+    ...orderData,
+    createdAt: now.toISOString(),
+    updatedAt: now.toISOString(),
+  });
+
   return orderData;
 };
 
@@ -141,9 +150,20 @@ export const updateOrder = async (
   updates: Partial<Order>
 ) => {
   const orderRef = ref(database, `orders/${orderId}`);
+  const now = new Date();
+
+  const serializedUpdates: Record<string, any> = {};
+  for (const [key, value] of Object.entries(updates)) {
+    if (value instanceof Date) {
+      serializedUpdates[key] = value.toISOString();
+    } else {
+      serializedUpdates[key] = value;
+    }
+  }
+
   await update(orderRef, {
-    ...updates,
-    updatedAt: new Date().toISOString(),
+    ...serializedUpdates,
+    updatedAt: now.toISOString(),
   });
 };
 
@@ -179,7 +199,7 @@ export const subscribeToOrders = (
       orders = orders.filter((o) => o.restaurantId === filters.restaurantId);
     }
 
-    // Sort by createdAt (safely)
+    // Sort newest first
     orders.sort(
       (a, b) =>
         (b.createdAt?.getTime?.() ?? 0) - (a.createdAt?.getTime?.() ?? 0)
