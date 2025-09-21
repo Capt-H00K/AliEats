@@ -4,7 +4,7 @@ import { OrderCard } from '@/components/orders/OrderCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Order } from '@/types';
-import { subscribeToOrders } from '@/services/firestore';
+import { subscribeToOrders } from '@/services/realtime';
 import { driverAcceptOrderRealtime } from '@/services/realtimeOrders';
 import { useToast } from '@/hooks/use-toast';
 import { Package, DollarSign, Star, TrendingUp } from 'lucide-react';
@@ -36,14 +36,13 @@ export const DriverDashboard: React.FC = () => {
     try {
       const unsubscribe = subscribeToOrders(
         (fetchedOrders) => {
-          // Filter orders assigned to this driver or ready for pickup
+          // Show all unassigned pending orders, plus those assigned to this driver
           const driverOrders = fetchedOrders.filter(order =>
-            order?.driverId === user.id || (order?.status === 'ready' && !order?.driverId)
+            (order?.status === "pending" && !order?.driverId) || order?.driverId === user.id
           );
           setOrders(driverOrders);
           setLoading(false);
-        },
-        { driverId: user.id }
+        }
       );
 
       return unsubscribe;
@@ -57,7 +56,6 @@ export const DriverDashboard: React.FC = () => {
     }
   }, [user, toast]);
 
-  // New: Handler for accepting an order (uses realtime DB)
   const handleAcceptOrder = async (order: Order) => {
     if (!user?.id) return;
     try {
@@ -116,13 +114,27 @@ export const DriverDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-muted-foreground text-sm">Earnings</p>
-                <p className="text-2xl font-bold text-accent" data-testid="stat-earnings">
+                <p className="text-muted-foreground text-sm">Completed Orders</p>
+                <p className="text-2xl font-bold text-secondary" data-testid="stat-completed-orders">
+                  {completedOrders.length}
+                </p>
+              </div>
+              <div className="bg-secondary/10 p-3 rounded-lg">
+                <CheckCircle className="text-secondary h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-muted-foreground text-sm">Total Earnings</p>
+                <p className="text-2xl font-bold text-accent" data-testid="stat-total-earnings">
                   ${totalEarnings.toFixed(2)}
                 </p>
               </div>
@@ -132,23 +144,6 @@ export const DriverDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-muted-foreground text-sm">Completed</p>
-                <p className="text-2xl font-bold text-secondary" data-testid="stat-completed">
-                  {completedOrders.length}
-                </p>
-              </div>
-              <div className="bg-secondary/10 p-3 rounded-lg">
-                <TrendingUp className="text-secondary h-6 w-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -180,9 +175,8 @@ export const DriverDashboard: React.FC = () => {
                   key={order.id}
                   order={order}
                   userRole="driver"
-                  // Add the accept handler as a prop if your OrderCard consumes it
                   onAcceptOrder={() => handleAcceptOrder(order)}
-                  // You may still pass status update/confirm payment handlers
+                  // Add other driver actions if needed
                 />
               ))}
             </div>

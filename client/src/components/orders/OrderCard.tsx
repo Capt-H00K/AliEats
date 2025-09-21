@@ -59,7 +59,6 @@ export const OrderCard: React.FC<OrderCardProps> = ({
     }
   };
 
-  // Defensive for possibly undefined id and createdAt
   const orderId = order.id ?? '';
   const orderIdShort = order.id ? order.id.slice(-8) : 'N/A';
   const createdAtString =

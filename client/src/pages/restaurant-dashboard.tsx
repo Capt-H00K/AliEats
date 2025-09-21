@@ -1,4 +1,3 @@
-// src/pages/restaurant-dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { OrderCard } from '@/components/orders/OrderCard';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,7 +33,8 @@ export const RestaurantDashboard: React.FC = () => {
 
     const unsubscribeOrders = subscribeToOrders(
       (fetchedOrders) => {
-        setOrders(fetchedOrders);
+        // Only show orders that have been accepted by a driver
+        setOrders(fetchedOrders.filter(order => !!order.driverId));
         setLoading(false);
       },
       { restaurantId: user.id }
@@ -54,7 +54,6 @@ export const RestaurantDashboard: React.FC = () => {
     try {
       let newStatus: OrderStatus;
 
-      // move to next logical status
       switch (status) {
         case 'pending':
           newStatus = 'preparing';
@@ -63,7 +62,7 @@ export const RestaurantDashboard: React.FC = () => {
           newStatus = 'ready';
           break;
         case 'ready':
-          newStatus = 'picked_up'; // or 'delivered' depending on your workflow
+          newStatus = 'picked_up';
           break;
         default:
           newStatus = status;
@@ -101,7 +100,6 @@ export const RestaurantDashboard: React.FC = () => {
     }
   };
 
-  // Stats
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
   const preparingOrders = orders.filter(order => order.status === 'preparing').length;
   const readyOrders = orders.filter(order => order.status === 'ready' || order.status === 'picked_up').length;
