@@ -7,7 +7,7 @@ import { Order } from '@/types';
 import { subscribeToOrders } from '@/services/realtime';
 import { driverAcceptOrderRealtime } from '@/services/realtimeOrders';
 import { useToast } from '@/hooks/use-toast';
-import { Package, DollarSign, Star, TrendingUp } from 'lucide-react';
+import { Package, DollarSign, Star, CheckCircle} from 'lucide-react';
 
 export const DriverDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -60,7 +60,7 @@ export const DriverDashboard: React.FC = () => {
     if (!user?.id) return;
     try {
       await driverAcceptOrderRealtime({
-        orderId: order.id,
+        orderId: order.id || "",
         driverId: user.id,
         restaurantId: order.restaurantId,
         orderAmount: order.totalPrice,
