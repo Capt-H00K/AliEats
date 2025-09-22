@@ -2,18 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { OrderCard } from '@/components/orders/OrderCard';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Order } from '@/types';
-import { subscribeToOrders } from '@/services/realtime';
+import { subscribeToOrders, updateOrder } from '@/services/realtime';
 import { driverAcceptOrderRealtime } from '@/services/realtimeOrders';
 import { useToast } from '@/hooks/use-toast';
-import { Package, DollarSign, Star, CheckCircle} from 'lucide-react';
+import { Package, DollarSign, Star, CheckCircle, Receipt } from 'lucide-react';
+import { DriverLedger } from '@/components/driver/DriverLedger';
 
 export const DriverDashboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'orders' | 'ledger'>('orders');
 
   useEffect(() => {
     // Defensive checks for user, role, and id
@@ -62,6 +65,7 @@ export const DriverDashboard: React.FC = () => {
       await driverAcceptOrderRealtime({
         orderId: order.id || "",
         driverId: user.id,
+        driverName: user.name,
         restaurantId: order.restaurantId,
         orderAmount: order.totalPrice,
       });
@@ -73,6 +77,41 @@ export const DriverDashboard: React.FC = () => {
       toast({
         title: "Error",
         description: "Failed to accept order.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, status: Order['status']) => {
+    try {
+      await updateOrder(orderId, { status });
+      toast({
+        title: "Status updated",
+        description: `Order status updated to ${status}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update order status.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleConfirmPayment = async (orderId: string) => {
+    try {
+      await updateOrder(orderId, { 
+        paymentConfirmed: true,
+        status: 'delivered'
+      });
+      toast({
+        title: "Payment confirmed",
+        description: "Payment confirmed and order marked as delivered",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to confirm payment.",
         variant: "destructive",
       });
     }
@@ -161,29 +200,65 @@ export const DriverDashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Available and Assigned Orders */}
+      {/* Tab Navigation */}
       <Card className="mb-8">
-        <CardContent className="p-6">
-          <h3 className="text-xl font-semibold mb-6" data-testid="text-orders-title">
-            Available & Assigned Orders
-          </h3>
+        <div className="border-b border-border">
+          <div className="flex space-x-0">
+            <Button
+              variant={activeTab === 'orders' ? "default" : "ghost"}
+              className={`flex-1 px-6 py-4 rounded-none ${
+                activeTab === 'orders'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-secondary hover:text-secondary-foreground'
+              }`}
+              onClick={() => setActiveTab('orders')}
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Available & Assigned Orders
+            </Button>
+            <Button
+              variant={activeTab === 'ledger' ? "default" : "ghost"}
+              className={`flex-1 px-6 py-4 rounded-none ${
+                activeTab === 'ledger'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-secondary hover:text-secondary-foreground'
+              }`}
+              onClick={() => setActiveTab('ledger')}
+            >
+              <Receipt className="mr-2 h-4 w-4" />
+              My Ledger
+            </Button>
+          </div>
+        </div>
 
-          {orders.length > 0 ? (
-            <div className="space-y-4">
-              {orders.map(order => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  userRole="driver"
-                  onAcceptOrder={() => handleAcceptOrder(order)}
-                  // Add other driver actions if needed
-                />
-              ))}
-            </div>
+        <CardContent className="p-6">
+          {activeTab === 'orders' ? (
+            <>
+              <h3 className="text-xl font-semibold mb-6" data-testid="text-orders-title">
+                Available & Assigned Orders
+              </h3>
+
+              {orders.length > 0 ? (
+                <div className="space-y-4">
+                  {orders.map(order => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      userRole="driver"
+                      onAcceptOrder={() => handleAcceptOrder(order)}
+                      onUpdateStatus={handleUpdateOrderStatus}
+                      onConfirmPayment={handleConfirmPayment}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8" data-testid="text-no-orders">
+                  No orders available at the moment.
+                </p>
+              )}
+            </>
           ) : (
-            <p className="text-muted-foreground text-center py-8" data-testid="text-no-orders">
-              No orders available at the moment.
-            </p>
+            <DriverLedger />
           )}
         </CardContent>
       </Card>

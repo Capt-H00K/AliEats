@@ -12,9 +12,10 @@ import {
 } from '@/services/realtime';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { Clock, Utensils, CheckCircle, TrendingUp, Plus, Edit, Trash2 } from 'lucide-react';
+import { Clock, Utensils, CheckCircle, TrendingUp, Plus, Edit, Trash2, DollarSign } from 'lucide-react';
 import { MenuForm } from '@/components/menu/MenuForm';
 import { Modal } from '@/components/ui/Modal';
+import { RestaurantLedger } from '@/components/restaurant/RestaurantLedger';
 
 export const RestaurantDashboard: React.FC = () => {
   const { toast } = useToast();
@@ -23,7 +24,7 @@ export const RestaurantDashboard: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed' | 'ledger'>('pending');
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
@@ -33,11 +34,21 @@ export const RestaurantDashboard: React.FC = () => {
 
     const unsubscribeOrders = subscribeToOrders(
       (fetchedOrders) => {
-        // Only show orders that have been accepted by a driver
-        setOrders(fetchedOrders.filter(order => !!order.driverId));
+        console.log('Restaurant Dashboard - All orders:', fetchedOrders);
+        console.log('Restaurant Dashboard - User ID:', user.id);
+        
+        // Show orders for this restaurant that are pending or have been accepted by a driver
+        const restaurantOrders = fetchedOrders.filter(order => {
+          const matches = order.restaurantId === user.id && 
+            (order.status === 'pending' || !!order.driverId);
+          console.log(`Order ${order.id}: restaurantId=${order.restaurantId}, status=${order.status}, driverId=${order.driverId}, matches=${matches}`);
+          return matches;
+        });
+        
+        console.log('Restaurant Dashboard - Filtered orders:', restaurantOrders);
+        setOrders(restaurantOrders);
         setLoading(false);
-      },
-      { restaurantId: user.id }
+      }
     );
 
     const unsubscribeMenu = subscribeToMenuItems(user.id, (fetchedMenuItems) => {
@@ -56,6 +67,7 @@ export const RestaurantDashboard: React.FC = () => {
 
       switch (status) {
         case 'pending':
+        case 'accepted':
           newStatus = 'preparing';
           break;
         case 'preparing':
@@ -88,19 +100,20 @@ export const RestaurantDashboard: React.FC = () => {
   const getFilteredOrders = (status: 'pending' | 'preparing' | 'ready' | 'completed') => {
     switch (status) {
       case 'pending':
-        return orders.filter(order => order.status === 'pending');
+        // Show orders that are pending (waiting for driver) or accepted (driver found, ready to prepare)
+        return orders.filter(order => order.status === 'pending' || order.status === 'accepted');
       case 'preparing':
         return orders.filter(order => order.status === 'preparing');
       case 'ready':
         return orders.filter(order => order.status === 'ready' || order.status === 'picked_up');
       case 'completed':
-        return orders.filter(order => order.status === 'completed');
+        return orders.filter(order => order.status === 'completed' || order.status === 'delivered');
       default:
         return [];
     }
   };
 
-  const pendingOrders = orders.filter(order => order.status === 'pending').length;
+  const pendingOrders = orders.filter(order => order.status === 'pending' || order.status === 'accepted').length;
   const preparingOrders = orders.filter(order => order.status === 'preparing').length;
   const readyOrders = orders.filter(order => order.status === 'ready' || order.status === 'picked_up').length;
   const todayRevenue = orders
@@ -113,6 +126,7 @@ export const RestaurantDashboard: React.FC = () => {
     { id: 'preparing', label: `Preparing (${preparingOrders})` },
     { id: 'ready', label: `Ready (${readyOrders})` },
     { id: 'completed', label: 'Completed' },
+    { id: 'ledger', label: 'Driver Ledger' },
   ];
 
   if (loading) return <LoadingSpinner />;
@@ -189,7 +203,7 @@ export const RestaurantDashboard: React.FC = () => {
                     ? 'bg-primary text-primary-foreground'
                     : 'hover:bg-secondary hover:text-secondary-foreground'
                 }`}
-                onClick={() => setActiveTab(tab.id as 'pending' | 'preparing' | 'ready' | 'completed')}
+                onClick={() => setActiveTab(tab.id as 'pending' | 'preparing' | 'ready' | 'completed' | 'ledger')}
               >
                 {tab.label}
               </Button>
@@ -198,22 +212,26 @@ export const RestaurantDashboard: React.FC = () => {
         </div>
 
         <CardContent className="p-6">
-          <div className="space-y-4">
-            {getFilteredOrders(activeTab).length > 0 ? (
-              getFilteredOrders(activeTab).map(order => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  userRole="restaurant"
-                  onUpdateStatus={handleUpdateStatus}
-                />
-              ))
-            ) : (
-              <p className="text-muted-foreground text-center py-8">
-                No {activeTab} orders at the moment.
-              </p>
-            )}
-          </div>
+          {activeTab === 'ledger' ? (
+            <RestaurantLedger />
+          ) : (
+            <div className="space-y-4">
+              {getFilteredOrders(activeTab).length > 0 ? (
+                getFilteredOrders(activeTab).map(order => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    userRole="restaurant"
+                    onUpdateStatus={handleUpdateStatus}
+                  />
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-8">
+                  No {activeTab} orders at the moment.
+                </p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 

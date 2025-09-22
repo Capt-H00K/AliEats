@@ -1,0 +1,8 @@
+Port 12001 is in use, trying another one...
+Port 12002 is in use, trying another one...
+
+  VITE v5.4.19  ready in 141 ms
+
+  ➜  Local:   http://localhost:12003/
+  ➜  Network: http://10.2.23.145:12003/
+  ➜  press h + enter to show help
