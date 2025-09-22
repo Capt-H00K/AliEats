@@ -39,11 +39,13 @@ export async function createOrderRealtime({
 export async function driverAcceptOrderRealtime({
   orderId,
   driverId,
+  driverName,
   restaurantId,
   orderAmount,
 }: {
   orderId: string;
   driverId: string;
+  driverName: string;
   restaurantId: string;
   orderAmount: number;
 }) {
@@ -56,6 +58,7 @@ export async function driverAcceptOrderRealtime({
 
   // Update order with driver info and status
   updates[`${orderPath}/driverId`] = driverId;
+  updates[`${orderPath}/driverName`] = driverName;
   updates[`${orderPath}/status`] = "accepted";
   updates[`${orderPath}/acceptedAt`] = serverTimestamp();
 

@@ -12,9 +12,10 @@ interface CartProps {
   cart: CartItem[];
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   selectedRestaurant: Restaurant;
+  onOrderPlaced?: () => void;
 }
 
-export const Cart: React.FC<CartProps> = ({ cart, setCart, selectedRestaurant }) => {
+export const Cart: React.FC<CartProps> = ({ cart, setCart, selectedRestaurant, onOrderPlaced }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'bank'>('bank');
@@ -51,6 +52,7 @@ export const Cart: React.FC<CartProps> = ({ cart, setCart, selectedRestaurant })
       await createOrder(order);
       setCart([]);
       toast({ title: "Order placed!", description: "Your order has been sent." });
+      onOrderPlaced?.();
     } catch (error) {
       toast({ title: "Error", description: "Failed to place order.", variant: "destructive" });
     } finally {
