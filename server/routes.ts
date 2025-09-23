@@ -9,6 +9,7 @@ import driverRoutes from "./driverRoutes.js";
 import ledgerRoutes from "./ledgerRoutes.js";
 import searchRoutes from "./searchRoutes.js";
 import customerRoutes from "./customerRoutes.js";
+import notificationRoutes from "./notificationRoutes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Image upload routes
@@ -34,6 +35,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Customer routes
   app.use("/api/customers", customerRoutes);
+  
+  // Notification routes
+  app.use("/api/notifications", notificationRoutes);
 
   // put other application routes here
   // prefix all routes with /api
