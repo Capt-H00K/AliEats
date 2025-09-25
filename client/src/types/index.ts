@@ -68,6 +68,7 @@ export interface User {
   role: "customer" | "driver" | "restaurant";
   phone?: string;
   address?: string;
+  restaurantId?: string; // For restaurant users
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -6,6 +6,7 @@ import {
   type CustomerProfile,
   type InsertCustomerProfile 
 } from '@shared/schema';
+import { authenticate, requireRole } from './middleware/auth';
 
 const router = Router();
 
@@ -52,10 +53,9 @@ const updateAddressSchema = z.object({
 });
 
 // Create customer profile
-router.post('/profile', async (req, res) => {
+router.post('/profile', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     
     const validatedData = createCustomerProfileSchema.parse(req.body);
     
@@ -107,10 +107,9 @@ router.post('/profile', async (req, res) => {
 });
 
 // Get customer profile by user ID
-router.get('/profile', async (req, res) => {
+router.get('/profile', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     
     // TODO: Use actual database storage
     // const customer = await storage.getCustomerProfileByUserId(userId);
@@ -177,10 +176,9 @@ router.get('/profile', async (req, res) => {
 });
 
 // Update customer profile
-router.put('/profile', async (req, res) => {
+router.put('/profile', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     
     const validatedData = updateCustomerProfileSchema.parse(req.body);
     
@@ -236,10 +234,9 @@ router.put('/profile', async (req, res) => {
 });
 
 // Add new address
-router.post('/addresses', async (req, res) => {
+router.post('/addresses', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     
     const validatedData = updateAddressSchema.parse(req.body);
     
@@ -274,10 +271,9 @@ router.post('/addresses', async (req, res) => {
 });
 
 // Update address
-router.put('/addresses/:addressId', async (req, res) => {
+router.put('/addresses/:addressId', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     const { addressId } = req.params;
     
     const validatedData = updateAddressSchema.parse(req.body);
@@ -313,10 +309,9 @@ router.put('/addresses/:addressId', async (req, res) => {
 });
 
 // Delete address
-router.delete('/addresses/:addressId', async (req, res) => {
+router.delete('/addresses/:addressId', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     const { addressId } = req.params;
     
     // TODO: Use actual database storage
@@ -336,10 +331,9 @@ router.delete('/addresses/:addressId', async (req, res) => {
 });
 
 // Set default address
-router.patch('/addresses/:addressId/default', async (req, res) => {
+router.patch('/addresses/:addressId/default', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     const { addressId } = req.params;
     
     // TODO: Use actual database storage
@@ -359,10 +353,9 @@ router.patch('/addresses/:addressId/default', async (req, res) => {
 });
 
 // Get customer order history
-router.get('/orders', async (req, res) => {
+router.get('/orders', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     const { page = 1, limit = 10, status } = req.query;
     
     // TODO: Use actual database storage
@@ -485,10 +478,9 @@ router.get('/orders', async (req, res) => {
 });
 
 // Get customer favorites
-router.get('/favorites', async (req, res) => {
+router.get('/favorites', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     const { type = 'all' } = req.query; // 'restaurants', 'menu_items', or 'all'
     
     // TODO: Use actual database storage
@@ -559,10 +551,9 @@ router.get('/favorites', async (req, res) => {
 });
 
 // Add to favorites
-router.post('/favorites', async (req, res) => {
+router.post('/favorites', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     const { type, itemId } = req.body;
     
     if (!['restaurant', 'menu_item'].includes(type)) {
@@ -594,10 +585,9 @@ router.post('/favorites', async (req, res) => {
 });
 
 // Remove from favorites
-router.delete('/favorites/:type/:itemId', async (req, res) => {
+router.delete('/favorites/:type/:itemId', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     const { type, itemId } = req.params;
     
     if (!['restaurant', 'menu_item'].includes(type)) {
@@ -623,10 +613,9 @@ router.delete('/favorites/:type/:itemId', async (req, res) => {
 });
 
 // Get customer loyalty points
-router.get('/loyalty', async (req, res) => {
+router.get('/loyalty', authenticate, requireRole(['customer']), async (req, res) => {
   try {
-    // TODO: Get user ID from authentication middleware
-    const userId = req.user?.id || 'temp-user-id';
+    const userId = req.user!.id;
     
     // TODO: Use actual database storage
     // const loyaltyData = await storage.getCustomerLoyalty(userId);

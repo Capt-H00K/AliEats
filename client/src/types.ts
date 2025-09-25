@@ -70,6 +70,7 @@ export interface User {
   role: 'customer' | 'driver' | 'restaurant';
   phone?: string;
   address?: string; // for customers
+  restaurantId?: string; // for restaurant users
   createdAt?: Date;
   updatedAt?: Date;
 }
