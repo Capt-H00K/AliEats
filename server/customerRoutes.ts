@@ -63,12 +63,20 @@ router.post('/profile', authenticate, requireRole(['customer']), async (req, res
       userId,
       firstName: validatedData.firstName,
       lastName: validatedData.lastName,
-      email: validatedData.email,
-      phone: validatedData.phone,
-      dateOfBirth: validatedData.dateOfBirth,
-      profilePicture: validatedData.profilePicture,
-      addresses: validatedData.addresses,
-      preferences: validatedData.preferences,
+      addresses: validatedData.addresses.map(addr => ({
+        id: addr.id || `addr-${Date.now()}-${Math.random()}`,
+        label: addr.label,
+        street: addr.street,
+        city: addr.city,
+        state: addr.state,
+        zipCode: addr.zipCode,
+        isDefault: addr.isDefault
+      })),
+      preferences: {
+        dietaryRestrictions: validatedData.preferences.dietaryRestrictions,
+        favoriteCategories: validatedData.preferences.cuisineTypes, // Map cuisineTypes to favoriteCategories
+        notifications: validatedData.preferences.notifications
+      },
     };
 
     // TODO: Use actual database storage
@@ -78,9 +86,10 @@ router.post('/profile', authenticate, requireRole(['customer']), async (req, res
     const mockCustomer: CustomerProfile = {
       id: 'customer-' + Date.now(),
       userId,
-      ...customerData,
-      loyaltyPoints: 0,
-      totalOrders: 0,
+      firstName: customerData.firstName || null,
+      lastName: customerData.lastName || null,
+      addresses: customerData.addresses || null,
+      preferences: customerData.preferences || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -120,10 +129,6 @@ router.get('/profile', authenticate, requireRole(['customer']), async (req, res)
       userId,
       firstName: 'John',
       lastName: 'Customer',
-      email: 'john.customer@example.com',
-      phone: '(555) 123-4567',
-      dateOfBirth: '1990-01-15',
-      profilePicture: 'https://example.com/profile.jpg',
       addresses: [
         {
           id: 'addr-1',
@@ -133,7 +138,6 @@ router.get('/profile', authenticate, requireRole(['customer']), async (req, res)
           state: 'CA',
           zipCode: '12345',
           isDefault: true,
-          deliveryInstructions: 'Ring doorbell twice',
         },
         {
           id: 'addr-2',
@@ -143,21 +147,17 @@ router.get('/profile', authenticate, requireRole(['customer']), async (req, res)
           state: 'CA',
           zipCode: '54321',
           isDefault: false,
-          deliveryInstructions: 'Leave at reception desk',
         },
       ],
       preferences: {
-        cuisineTypes: ['Italian', 'Mexican', 'Chinese'],
+        favoriteCategories: ['Italian', 'Mexican', 'Chinese'],
         dietaryRestrictions: ['Vegetarian'],
-        spiceLevel: 'medium',
         notifications: {
           orderUpdates: true,
           promotions: true,
           newRestaurants: false,
         },
       },
-      loyaltyPoints: 250,
-      totalOrders: 15,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date(),
     };
@@ -191,23 +191,20 @@ router.put('/profile', authenticate, requireRole(['customer']), async (req, res)
       userId,
       firstName: validatedData.firstName || 'John',
       lastName: validatedData.lastName || 'Customer',
-      email: validatedData.email || 'john.customer@example.com',
-      phone: validatedData.phone || '(555) 123-4567',
-      dateOfBirth: validatedData.dateOfBirth || '1990-01-15',
-      profilePicture: validatedData.profilePicture || 'https://example.com/profile.jpg',
-      addresses: validatedData.addresses || [],
-      preferences: validatedData.preferences || {
-        cuisineTypes: [],
-        dietaryRestrictions: [],
-        spiceLevel: 'medium',
-        notifications: {
-          orderUpdates: true,
-          promotions: true,
-          newRestaurants: false,
-        },
-      },
-      loyaltyPoints: 250,
-      totalOrders: 15,
+      addresses: validatedData.addresses ? validatedData.addresses.map(addr => ({
+        id: addr.id || `addr-${Date.now()}-${Math.random()}`,
+        label: addr.label,
+        street: addr.street,
+        city: addr.city,
+        state: addr.state,
+        zipCode: addr.zipCode,
+        isDefault: addr.isDefault
+      })) : null,
+      preferences: validatedData.preferences ? {
+        favoriteCategories: validatedData.preferences.cuisineTypes || undefined,
+        dietaryRestrictions: validatedData.preferences.dietaryRestrictions || undefined,
+        notifications: validatedData.preferences.notifications || undefined,
+      } : null,
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date(),
     };
