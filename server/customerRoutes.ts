@@ -7,6 +7,7 @@ import {
   type InsertCustomerProfile 
 } from '@shared/schema';
 import { authenticate, requireRole } from './middleware/auth';
+import { storage } from './storage';
 
 const router = Router();
 
@@ -79,24 +80,12 @@ router.post('/profile', authenticate, requireRole(['customer']), async (req, res
       },
     };
 
-    // TODO: Use actual database storage
-    // const customer = await storage.createCustomerProfile(customerData);
-    
-    // For now, return mock data
-    const mockCustomer: CustomerProfile = {
-      id: 'customer-' + Date.now(),
-      userId,
-      firstName: customerData.firstName || null,
-      lastName: customerData.lastName || null,
-      addresses: customerData.addresses || null,
-      preferences: customerData.preferences || null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Use actual database storage
+    const customer = await storage.createCustomerProfile(customerData);
 
     res.status(201).json({
       success: true,
-      data: mockCustomer,
+      data: customer,
     });
   } catch (error) {
     console.error('Create customer profile error:', error);
@@ -120,51 +109,19 @@ router.get('/profile', authenticate, requireRole(['customer']), async (req, res)
   try {
     const userId = req.user!.id;
     
-    // TODO: Use actual database storage
-    // const customer = await storage.getCustomerProfileByUserId(userId);
+    // Use actual database storage
+    const customer = await storage.getCustomerProfile(userId);
     
-    // For now, return mock data
-    const mockCustomer: CustomerProfile = {
-      id: 'customer-1',
-      userId,
-      firstName: 'John',
-      lastName: 'Customer',
-      addresses: [
-        {
-          id: 'addr-1',
-          label: 'Home',
-          street: '123 Main Street',
-          city: 'Anytown',
-          state: 'CA',
-          zipCode: '12345',
-          isDefault: true,
-        },
-        {
-          id: 'addr-2',
-          label: 'Work',
-          street: '456 Business Ave',
-          city: 'Corporate City',
-          state: 'CA',
-          zipCode: '54321',
-          isDefault: false,
-        },
-      ],
-      preferences: {
-        favoriteCategories: ['Italian', 'Mexican', 'Chinese'],
-        dietaryRestrictions: ['Vegetarian'],
-        notifications: {
-          orderUpdates: true,
-          promotions: true,
-          newRestaurants: false,
-        },
-      },
-      createdAt: new Date('2024-01-01'),
-      updatedAt: new Date(),
-    };
+    if (!customer) {
+      return res.status(404).json({
+        error: 'Customer profile not found',
+        message: 'Please create a profile first'
+      });
+    }
 
     res.json({
       success: true,
-      data: mockCustomer,
+      data: customer,
     });
   } catch (error) {
     console.error('Get customer profile error:', error);
