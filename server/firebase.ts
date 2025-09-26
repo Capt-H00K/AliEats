@@ -1,8 +1,9 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getStorage } from 'firebase-admin/storage';
-import { getAuth } from 'firebase-admin/auth';
+import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
+import { getStorage, Storage } from 'firebase-admin/storage';
+import { getAuth, Auth } from 'firebase-admin/auth';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,19 +11,41 @@ const __dirname = path.dirname(__filename);
 // Initialize Firebase Admin SDK
 const serviceAccountPath = path.join(__dirname, '..', 'flavorfleet-a9b09-firebase-adminsdk-fbsvc-30fb05c745.json');
 
-let app;
-if (getApps().length === 0) {
-  app = initializeApp({
-    credential: cert(serviceAccountPath),
-    storageBucket: 'flavorfleet-a9b09.appspot.com'
-  });
-} else {
-  app = getApps()[0];
+let app: App | null = null;
+let storage: Storage | null = null;
+let auth: Auth | null = null;
+let bucket: any = null;
+
+try {
+  if (getApps().length === 0) {
+    // Try to use service account file first
+    if (fs.existsSync(serviceAccountPath)) {
+      app = initializeApp({
+        credential: cert(serviceAccountPath),
+        storageBucket: 'flavorfleet-a9b09.appspot.com'
+      });
+    } else {
+      // Fallback to environment variables or application default credentials
+      console.warn('Firebase service account file not found. Firebase admin features will be limited.');
+      // In development without service account, we'll skip Firebase admin initialization
+      // This allows the app to run without Firebase admin features
+    }
+  } else {
+    app = getApps()[0];
+  }
+
+  if (app) {
+    storage = getStorage(app);
+    auth = getAuth(app);
+    bucket = storage.bucket();
+    console.log('Firebase Admin SDK initialized successfully');
+  }
+} catch (error) {
+  console.warn('Failed to initialize Firebase Admin SDK:', error instanceof Error ? error.message : 'Unknown error');
+  console.log('App will run with limited Firebase functionality');
 }
 
-export const storage = getStorage(app);
-export const auth = getAuth(app);
-export const bucket = storage.bucket();
+export { storage, auth, bucket };
 
 // Image upload utility functions
 export interface UploadResult {
@@ -37,6 +60,10 @@ export async function uploadImage(
   folder: 'profiles' | 'restaurants' | 'menu-items' | 'categories',
   contentType: string = 'image/jpeg'
 ): Promise<UploadResult> {
+  if (!bucket) {
+    throw new Error('Firebase storage is not available. Please configure Firebase admin credentials.');
+  }
+
   try {
     const timestamp = Date.now();
     const fileExtension = fileName.split('.').pop() || 'jpg';
@@ -72,6 +99,10 @@ export async function uploadImage(
 }
 
 export async function deleteImage(filePath: string): Promise<void> {
+  if (!bucket) {
+    throw new Error('Firebase storage is not available. Please configure Firebase admin credentials.');
+  }
+
   try {
     const fileRef = bucket.file(filePath);
     await fileRef.delete();
