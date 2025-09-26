@@ -1,15 +1,30 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getMessaging, Message, MulticastMessage } from 'firebase-admin/messaging';
+import { getMessaging, Message, MulticastMessage, Messaging } from 'firebase-admin/messaging';
 
-// Initialize Firebase Admin SDK
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+// Initialize Firebase Admin SDK for messaging
+let messaging: Messaging | null = null;
+
+try {
+  if (!getApps().length) {
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      initializeApp({
+        credential: cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+      });
+      messaging = getMessaging();
+      console.log('Firebase messaging initialized successfully');
+    } else {
+      console.warn('Firebase environment variables not found. Push notifications will be disabled.');
+    }
+  } else {
+    messaging = getMessaging();
+  }
+} catch (error) {
+  console.warn('Failed to initialize Firebase messaging:', error instanceof Error ? error.message : 'Unknown error');
+  console.log('Push notifications will be disabled');
 }
 
 export interface NotificationPayload {
@@ -27,12 +42,17 @@ export interface NotificationTarget {
 }
 
 export class NotificationService {
-  private messaging = getMessaging();
+  private messaging: Messaging | null = messaging;
 
   /**
    * Send notification to a single device
    */
   async sendToDevice(token: string, payload: NotificationPayload): Promise<boolean> {
+    if (!this.messaging) {
+      console.warn('Firebase messaging not available. Cannot send notification to device.');
+      return false;
+    }
+
     try {
       const message: Message = {
         token,
@@ -66,6 +86,15 @@ export class NotificationService {
     failureCount: number;
     invalidTokens: string[];
   }> {
+    if (!this.messaging) {
+      console.warn('Firebase messaging not available. Cannot send notifications to multiple devices.');
+      return {
+        successCount: 0,
+        failureCount: tokens.length,
+        invalidTokens: [],
+      };
+    }
+
     try {
       const message: MulticastMessage = {
         tokens,
@@ -111,6 +140,11 @@ export class NotificationService {
    * Send notification to a topic (for broadcast messages)
    */
   async sendToTopic(topic: string, payload: NotificationPayload): Promise<boolean> {
+    if (!this.messaging) {
+      console.warn('Firebase messaging not available. Cannot send notification to topic.');
+      return false;
+    }
+
     try {
       const message: Message = {
         topic,
@@ -140,6 +174,11 @@ export class NotificationService {
    * Subscribe users to a topic
    */
   async subscribeToTopic(tokens: string[], topic: string): Promise<boolean> {
+    if (!this.messaging) {
+      console.warn('Firebase messaging not available. Cannot subscribe to topic.');
+      return false;
+    }
+
     try {
       const response = await this.messaging.subscribeToTopic(tokens, topic);
       console.log('Successfully subscribed to topic:', response);
@@ -154,6 +193,11 @@ export class NotificationService {
    * Unsubscribe users from a topic
    */
   async unsubscribeFromTopic(tokens: string[], topic: string): Promise<boolean> {
+    if (!this.messaging) {
+      console.warn('Firebase messaging not available. Cannot unsubscribe from topic.');
+      return false;
+    }
+
     try {
       const response = await this.messaging.unsubscribeFromTopic(tokens, topic);
       console.log('Successfully unsubscribed from topic:', response);
