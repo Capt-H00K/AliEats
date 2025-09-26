@@ -1,0 +1,37 @@
+runConfig:
+  runtime: nodejs20
+  cpu: 1
+  memory: 1Gi
+  maxInstances: 10
+  minInstances: 0
+  concurrency: 100
+
+env:
+  - variable: NODE_ENV
+    value: production
+  - variable: PORT
+    value: "8080"
+  - variable: FIREBASE_PROJECT_ID
+    secret: FIREBASE_PROJECT_ID
+  - variable: FIREBASE_PRIVATE_KEY_ID
+    secret: FIREBASE_PRIVATE_KEY_ID
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: FIREBASE_PRIVATE_KEY
+  - variable: FIREBASE_CLIENT_EMAIL
+    secret: FIREBASE_CLIENT_EMAIL
+  - variable: FIREBASE_CLIENT_ID
+    secret: FIREBASE_CLIENT_ID
+  - variable: FIREBASE_AUTH_URI
+    secret: FIREBASE_AUTH_URI
+  - variable: FIREBASE_TOKEN_URI
+    secret: FIREBASE_TOKEN_URI
+  - variable: FIREBASE_AUTH_PROVIDER_X509_CERT_URL
+    secret: FIREBASE_AUTH_PROVIDER_X509_CERT_URL
+  - variable: FIREBASE_CLIENT_X509_CERT_URL
+    secret: FIREBASE_CLIENT_X509_CERT_URL
+  - variable: FIREBASE_UNIVERSE_DOMAIN
+    secret: FIREBASE_UNIVERSE_DOMAIN
+  - variable: FIREBASE_STORAGE_BUCKET
+    secret: FIREBASE_STORAGE_BUCKET
+  - variable: DATABASE_URL
+    secret: DATABASE_URL

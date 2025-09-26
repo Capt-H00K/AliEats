@@ -12,6 +12,15 @@ import customerRoutes from "./customerRoutes.js";
 import notificationRoutes from "./notificationRoutes.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    });
+  });
+
   // Image upload routes
   app.use("/api/images", imageRoutes);
   
