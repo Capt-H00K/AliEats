@@ -1,0 +1,115 @@
+Showing logs for last 1 hour from 26/09/2025, 17:48 to 26/09/2025, 18:48.
+2025-09-26 18:43:04.136
+Starting new instance. Reason: DEPLOYMENT_ROLLOUT - Instance started due to traffic shifting between revisions due to deployment, traffic split adjustment, or deployment health check.
+2025-09-26 18:43:05.599
+> rest-express@1.0.0 start
+2025-09-26 18:43:05.599
+> NODE_ENV=production node dist/index.js
+2025-09-26 18:43:06.619
+node:internal/modules/package_json_reader:266
+2025-09-26 18:43:06.619
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+2025-09-26 18:43:06.619
+        ^
+2025-09-26 18:43:06.619
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /workspace/dist/index.js
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:266:9)
+    at packageResolve (node:internal/modules/esm/resolve:767:81)
+    at moduleResolve (node:internal/modules/esm/resolve:853:18)
+    at defaultResolve (node:internal/modules/esm/resolve:983:11)
+
+{
+errorGroups: [1]
+insertId: "68d6c29a000974ff7b8699d3"
+labels: {2}
+logName: "projects/flavorfleet-a9b09/logs/run.googleapis.com%2Fstderr"
+receiveTimestamp: "2025-09-26T16:43:06.623434731Z"
+resource: {2}
+severity: "ERROR"
+textPayload: "Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'vite' imported from /workspace/dist/index.js
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:266:9)
+    at packageResolve (node:internal/modules/esm/resolve:767:81)
+    at moduleResolve (node:internal/modules/esm/resolve:853:18)
+    at defaultResolve (node:internal/modules/esm/resolve:983:11)"
+timestamp: "2025-09-26T16:43:06.619775Z"
+}
+2025-09-26 18:43:06.619
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
+2025-09-26 18:43:06.619
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
+2025-09-26 18:43:06.619
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
+2025-09-26 18:43:06.619
+    at ModuleJob._link (node:internal/modules/esm/module_job:183:49) {
+2025-09-26 18:43:06.619
+  code: 'ERR_MODULE_NOT_FOUND'
+2025-09-26 18:43:06.619
+}
+2025-09-26 18:43:06.619
+Node.js v22.20.0
+2025-09-26 18:43:06.627
+npm notice
+2025-09-26 18:43:06.627
+npm notice New major version of npm available! 10.9.3 -> 11.6.1
+2025-09-26 18:43:06.627
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.6.1
+2025-09-26 18:43:06.627
+npm notice To update run: npm install -g npm@11.6.1
+2025-09-26 18:43:06.627
+npm notice
+2025-09-26 18:43:07.280
+Container called exit(1).
+
+{
+insertId: "68d6c29b000447b2ea58903b"
+labels: {3}
+logName: "projects/flavorfleet-a9b09/logs/run.googleapis.com%2Fvarlog%2Fsystem"
+receiveTimestamp: "2025-09-26T16:43:07.469657076Z"
+resource: {2}
+severity: "WARNING"
+textPayload: "Container called exit(1)."
+timestamp: "2025-09-26T16:43:07.280491043Z"
+}
+2025-09-26 18:43:07.407
+Default STARTUP TCP probe failed 1 time consecutively for container "thesha-1" on port 8080. The instance was not started.
+Connection failed with status CANCELLED.
+
+{
+insertId: "68d6c29b0006375205e52af0"
+labels: {2}
+logName: "projects/flavorfleet-a9b09/logs/run.googleapis.com%2Fvarlog%2Fsystem"
+receiveTimestamp: "2025-09-26T16:43:07.469657076Z"
+resource: {2}
+severity: "ERROR"
+textPayload: "Default STARTUP TCP probe failed 1 time consecutively for container "thesha-1" on port 8080. The instance was not started.
+Connection failed with status CANCELLED."
+timestamp: "2025-09-26T16:43:07.407378Z"
+}
+2025-09-26 18:43:07.421
+
+Cloud Run
+
+CreateService
+
+thesha-build-2025-09-26-000
+Ready condition status changed to False for Revision thesha-build-2025-09-26-000 with message: The user-provided container failed to start and listen on the port defined provided by the PORT=8080 environment variable within the allocated timeout. This can happen when the container port is misconfigured or if the timeout is too short. The health check timeout can be extended. Logs for this revision might contain more information.
+
+Logs URL: https://console.cloud.google.com/logs/viewer?project=flavorfleet-a9b09&resource=cloud_run_revision/service_name/thesha/revision_name/thesha-build-2025-09-26-000&advancedFilter=resource.type%3D%22cloud_run_revision%22%0Aresource.labels.service_name%3D%22thesha%22%0Aresource.labels.revision_name%3D%22thesha-build-2025-09-26-000%22 
+For more troubleshooting guidance, see https://cloud.google.com/run/docs/troubleshooting#container-failed-to-start
+
+{
+insertId: "ozaqkmd13cs"
+logName: "projects/flavorfleet-a9b09/logs/cloudaudit.googleapis.com%2Fsystem_event"
+protoPayload: {
+@type: "type.googleapis.com/google.cloud.audit.AuditLog"
+methodName: "/Services.CreateService"
+resourceName: "namespaces/flavorfleet-a9b09/revisions/thesha-build-2025-09-26-000"
+response: {6}
+serviceName: "run.googleapis.com"
+status: {2}
+}
+receiveTimestamp: "2025-09-26T16:43:07.712780992Z"
+resource: {2}
+severity: "ERROR"
+timestamp: "2025-09-26T16:43:07.421952Z"
+}
